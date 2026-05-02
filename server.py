@@ -9,6 +9,8 @@ from dotenv import load_dotenv
 import os
 import json
 
+PORT = int(os.environ.get("PORT", 8000))
+
 load_dotenv()
 app = FastAPI()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
