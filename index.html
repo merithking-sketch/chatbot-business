@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BizBot — Assistant Business</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root {
+  --bg:#f7f8fc; --sidebar:#ffffff; --border:#e5e7eb; --text:#111827;
+  --muted:#6b7280; --user:#2563eb; --bot:#ffffff; --input:#ffffff;
+  --accent:#2563eb; --hover:#f3f4f6; --active:#eff6ff; --shadow:0 1px 3px rgba(0,0,0,0.1);
+}
+[data-theme="dark"] {
+  --bg:#0f172a; --sidebar:#1e293b; --border:#334155; --text:#f1f5f9;
+  --muted:#94a3b8; --user:#3b82f6; --bot:#1e293b; --input:#1e293b;
+  --accent:#3b82f6; --hover:#334155; --active:#1d4ed820; --shadow:0 1px 3px rgba(0,0,0,0.4);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:260px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;flex-shrink:0;}
+.sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--border);}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,#2563eb,#1d4ed8);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.logo-name{font-weight:600;font-size:1rem;}
+.logo-sub{font-size:0.62rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.new-btn{width:100%;padding:10px 14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:0.85rem;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:8px;font-family:'Inter',sans-serif;transition:opacity .2s;}
+.new-btn:hover{opacity:.88;}
+.search-box{padding:10px 16px;border-bottom:1px solid var(--border);}
+.search-input{width:100%;padding:8px 12px;background:var(--hover);border:none;border-radius:8px;font-size:0.8rem;color:var(--text);font-family:'Inter',sans-serif;outline:none;}
+.search-input::placeholder{color:var(--muted);}
+.conv-list{flex:1;overflow-y:auto;padding:8px;}
+.conv-section-label{font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:8px 8px 4px;}
+.conv-item{padding:9px 10px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .15s;margin-bottom:2px;}
+.conv-item:hover{background:var(--hover);}
+.conv-item.active{background:var(--active);}
+.conv-text{font-size:0.81rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
+.conv-date{font-size:0.65rem;color:var(--muted);flex-shrink:0;}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border);}
+.footer-btn{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:0.82rem;color:var(--muted);transition:background .15s;}
+.footer-btn:hover{background:var(--hover);color:var(--text);}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+.topbar{padding:14px 24px;border-bottom:1px solid var(--border);background:var(--sidebar);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.topbar-title{font-weight:600;font-size:0.92rem;}
+.topbar-actions{display:flex;gap:8px;align-items:center;}
+.top-btn{padding:6px 12px;border:1px solid var(--border);background:transparent;border-radius:8px;font-size:0.76rem;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;display:flex;align-items:center;gap:5px;}
+.top-btn:hover{background:var(--hover);color:var(--text);}
+.toggle{width:36px;height:20px;background:var(--border);border-radius:10px;cursor:pointer;position:relative;transition:background .3s;border:none;}
+.toggle.on{background:var(--accent);}
+.toggle::after{content:'';position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform .3s;}
+.toggle.on::after{transform:translateX(16px);}
+
+/* MESSAGES */
+.messages{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:20px;scroll-behavior:smooth;}
+.welcome{text-align:center;padding:60px 20px;}
+.welcome h2{font-size:1.5rem;font-weight:600;margin:12px 0 8px;}
+.welcome p{color:var(--muted);font-size:0.88rem;max-width:400px;margin:0 auto 24px;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:580px;margin:0 auto;}
+.chip{padding:8px 16px;background:var(--bot);border:1px solid var(--border);border-radius:20px;font-size:0.8rem;cursor:pointer;transition:all .15s;color:var(--text);}
+.chip:hover{border-color:var(--accent);color:var(--accent);}
+.msg-row{display:flex;flex-direction:column;max-width:72%;}
+.msg-row.user{align-self:flex-end;align-items:flex-end;}
+.msg-row.bot{align-self:flex-start;align-items:flex-start;}
+.msg-sender{font-size:0.7rem;color:var(--muted);margin-bottom:4px;font-weight:500;}
+.msg-bubble{padding:12px 16px;border-radius:16px;font-size:0.88rem;line-height:1.7;}
+.msg-row.user .msg-bubble{background:var(--user);color:#fff;border-bottom-right-radius:4px;box-shadow:var(--shadow);}
+.msg-row.bot .msg-bubble{background:var(--bot);color:var(--text);border-bottom-left-radius:4px;border:1px solid var(--border);box-shadow:var(--shadow);}
+.msg-meta{display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap;}
+.msg-time,.msg-rt{font-size:0.67rem;color:var(--muted);}
+.msg-actions{display:flex;gap:3px;}
+.act-btn{padding:3px 8px;background:transparent;border:1px solid var(--border);border-radius:6px;font-size:0.7rem;cursor:pointer;color:var(--muted);transition:all .15s;font-family:'Inter',sans-serif;}
+.act-btn:hover{background:var(--hover);color:var(--text);}
+.act-btn.liked{color:#10b981;border-color:#10b981;}
+.act-btn.disliked{color:#ef4444;border-color:#ef4444;}
+.typing-row{align-self:flex-start;}
+.typing-bubble{display:flex;align-items:center;gap:8px;padding:12px 16px;background:var(--bot);border:1px solid var(--border);border-radius:16px;border-bottom-left-radius:4px;box-shadow:var(--shadow);}
+.dots{display:flex;gap:4px;}
+.dot{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:bounce 1.2s infinite;}
+.dot:nth-child(2){animation-delay:.2s;}
+.dot:nth-child(3){animation-delay:.4s;}
+@keyframes bounce{0%,100%{transform:translateY(0);opacity:.4;}50%{transform:translateY(-4px);opacity:1;}}
+.typing-text{font-size:0.76rem;color:var(--muted);}
+
+/* INPUT BAR */
+.input-bar{padding:14px 24px 18px;background:var(--bg);border-top:1px solid var(--border);flex-shrink:0;}
+.input-wrap{display:flex;align-items:flex-end;gap:8px;background:var(--input);border:1.5px solid var(--border);border-radius:14px;padding:10px 12px;box-shadow:var(--shadow);transition:border-color .2s;}
+.input-wrap:focus-within{border-color:var(--accent);}
+.icon-btns{display:flex;gap:4px;}
+.icon-btn{width:30px;height:30px;background:transparent;border:none;border-radius:8px;cursor:pointer;color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:15px;transition:background .15s;}
+.icon-btn:hover{background:var(--hover);color:var(--text);}
+textarea#inp{flex:1;border:none;background:transparent;font-family:'Inter',sans-serif;font-size:0.88rem;color:var(--text);resize:none;outline:none;max-height:120px;min-height:24px;line-height:1.5;}
+textarea#inp::placeholder{color:var(--muted);}
+.send-btn{width:34px;height:34px;background:var(--accent);border:none;border-radius:10px;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;transition:opacity .2s;flex-shrink:0;}
+.send-btn:hover{opacity:.85;}
+.send-btn:disabled{opacity:.4;cursor:not-allowed;}
+.hint{text-align:center;font-size:0.68rem;color:var(--muted);margin-top:6px;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+@media(max-width:768px){.sidebar{display:none;}}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">
+      <div class="logo-icon">💼</div>
+      <div><div class="logo-name">BizBot</div><div class="logo-sub">Assistant Business</div></div>
+    </div>
+    <button class="new-btn" onclick="newChat()">✏️ Nouvelle conversation</button>
+  </div>
+  <div class="search-box">
+    <input class="search-input" placeholder="🔍 Rechercher..." oninput="searchConvs(this.value)">
+  </div>
+  <div class="conv-list" id="convList"></div>
+  <div class="sidebar-footer">
+    <div class="footer-btn" onclick="downloadPDF()">📥 Télécharger en PDF</div>
+    <div class="footer-btn">⚙️ Paramètres</div>
+    <div class="footer-btn">👤 Mon profil</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title" id="convTitle">💼 BizBot</span>
+    <div class="topbar-actions">
+      <button class="top-btn" onclick="downloadPDF()">📥 PDF</button>
+      <span style="font-size:.78rem;color:var(--muted)">🌙</span>
+      <button class="toggle" id="themeBtn" onclick="toggleTheme()"></button>
+    </div>
+  </div>
+
+  <div class="messages" id="messages">
+    <div class="welcome" id="welcome">
+      <div style="font-size:3rem">💼</div>
+      <h2>Bonjour ! Je suis BizBot</h2>
+      <p>Votre expert en business & entrepreneuriat. Posez-moi n'importe quelle question !</p>
+      <div class="chips">
+        <span class="chip" onclick="suggest('Comment créer une entreprise ?')">💡 Créer une entreprise</span>
+        <span class="chip" onclick="suggest('Comment trouver mes premiers clients ?')">🎯 Premiers clients</span>
+        <span class="chip" onclick="suggest('Comment rédiger un business plan ?')">📋 Business plan</span>
+        <span class="chip" onclick="suggest('Quelles sont les sources de financement ?')">💰 Financement</span>
+        <span class="chip" onclick="suggest('Comment faire du marketing digital ?')">📱 Marketing digital</span>
+        <span class="chip" onclick="suggest('Comment gérer mon équipe ?')">👥 Gestion d\'équipe</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-bar">
+    <div class="input-wrap">
+      <div class="icon-btns">
+        <button class="icon-btn" title="Pièce jointe">📎</button>
+        <button class="icon-btn" title="Micro">🎤</button>
+      </div>
+      <textarea id="inp" placeholder="Écris ton message..." rows="1"
+        onkeydown="handleKey(event)" oninput="resize(this)"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="send()">➤</button>
+    </div>
+    <div class="hint">Entrée pour envoyer • Shift+Entrée pour un saut de ligne</div>
+  </div>
+</div>
+
+<script>
+let convs = JSON.parse(localStorage.getItem('bizbot_convs') || '[]');
+let curId = null, curHistory = [], isDark = localStorage.getItem('bizbot_theme') === 'dark', busy = false;
+
+// Init theme
+if(isDark){ document.documentElement.setAttribute('data-theme','dark'); document.getElementById('themeBtn').classList.add('on'); }
+renderList();
+
+function toggleTheme(){
+  isDark=!isDark;
+  document.documentElement.setAttribute('data-theme',isDark?'dark':'light');
+  document.getElementById('themeBtn').classList.toggle('on',isDark);
+  localStorage.setItem('bizbot_theme',isDark?'dark':'light');
+}
+
+function newChat(){
+  curId=Date.now().toString(); curHistory=[];
+  document.getElementById('messages').innerHTML=`
+    <div class="welcome" id="welcome">
+      <div style="font-size:2.5rem">💼</div>
+      <h2>Nouvelle conversation</h2>
+      <p>Posez votre première question !</p>
+      <div class="chips">
+        <span class="chip" onclick="suggest('Comment créer une entreprise ?')">💡 Créer une entreprise</span>
+        <span class="chip" onclick="suggest('Comment financer mon projet ?')">💰 Financement</span>
+        <span class="chip" onclick="suggest('Comment trouver des clients ?')">🎯 Trouver des clients</span>
+      </div>
+    </div>`;
+  document.getElementById('convTitle').textContent='💼 Nouvelle conversation';
+  document.querySelectorAll('.conv-item').forEach(e=>e.classList.remove('active'));
+}
+
+function suggest(t){ document.getElementById('inp').value=t; send(); }
+
+function handleKey(e){ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); } }
+
+function resize(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; }
+
+function ftime(){ return new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }
+
+function esc(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
+
+function addMsg(role, content){
+  const w=document.getElementById('welcome'); if(w) w.remove();
+  const m=document.getElementById('messages');
+  const id='m'+Date.now();
+  if(role==='user'){
+    m.innerHTML+=`<div class="msg-row user" id="${id}">
+      <div class="msg-sender">Vous</div>
+      <div class="msg-bubble">${esc(content)}</div>
+      <div class="msg-meta"><span class="msg-time">${ftime()}</span></div>
+    </div>`;
+  } else {
+    m.innerHTML+=`<div class="msg-row bot" id="${id}">
+      <div class="msg-sender">💼 BizBot</div>
+      <div class="msg-bubble" id="b${id}"></div>
+      <div class="msg-meta" id="meta${id}">
+        <span class="msg-time">${ftime()}</span>
+        <span class="msg-rt" id="rt${id}"></span>
+        <div class="msg-actions">
+          <button class="act-btn" onclick="copyMsg('b${id}')">📋 Copier</button>
+          <button class="act-btn" onclick="this.classList.toggle('liked')">👍</button>
+          <button class="act-btn" onclick="this.classList.toggle('disliked')">👎</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  scroll(); return id;
+}
+
+function showTyping(){
+  document.getElementById('messages').innerHTML+=`<div class="typing-row msg-row" id="typing">
+    <div class="typing-bubble">
+      <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <span class="typing-text">BizBot est en train d'écrire...</span>
+    </div>
+  </div>`; scroll();
+}
+function hideTyping(){ const t=document.getElementById('typing'); if(t) t.remove(); }
+function scroll(){ const m=document.getElementById('messages'); m.scrollTop=m.scrollHeight; }
+function copyMsg(id){ navigator.clipboard.writeText(document.getElementById(id).innerText); }
+
+async function send(){
+  if(busy) return;
+  const inp=document.getElementById('inp');
+  const msg=inp.value.trim(); if(!msg) return;
+  if(!curId) curId=Date.now().toString();
+  inp.value=''; inp.style.height='auto';
+  document.getElementById('sendBtn').disabled=true; busy=true;
+  if(curHistory.length===0){
+    const t=msg.length>30?msg.substring(0,30)+'...':msg;
+    document.getElementById('convTitle').textContent='💬 '+t;
+  }
+  addMsg('user',msg); showTyping();
+  const t0=Date.now();
+  try{
+    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message:msg,history:curHistory})});
+    hideTyping();
+    const id=addMsg('bot','');
+    const bubble=document.getElementById('b'+id);
+    const reader=res.body.getReader(); const dec=new TextDecoder(); let full='';
+    while(true){
+      const {done,value}=await reader.read(); if(done) break;
+      const lines=dec.decode(value).split('\n');
+      for(const line of lines){
+        if(line.startsWith('data: ')){
+          const d=line.slice(6); if(d==='[DONE]') break;
+          try{ const p=JSON.parse(d); if(p.text){ full+=p.text; bubble.innerHTML=esc(full); scroll(); } }catch(e){}
+        }
+      }
+    }
+    const rt=((Date.now()-t0)/1000).toFixed(1);
+    const rtEl=document.getElementById('rt'+id);
+    if(rtEl) rtEl.textContent='⚡ '+rt+'s';
+    curHistory.push({role:'user',content:msg});
+    curHistory.push({role:'assistant',content:full});
+    saveConv(msg);
+  }catch(e){
+    hideTyping(); addMsg('bot','❌ Erreur de connexion. Vérifiez que le serveur est lancé.');
+  }
+  document.getElementById('sendBtn').disabled=false; busy=false;
+}
+
+function saveConv(firstMsg){
+  const idx=convs.findIndex(c=>c.id===curId);
+  const title=curHistory.length<=2?(firstMsg.length>30?firstMsg.substring(0,30)+'...':firstMsg):convs[idx]?.title||firstMsg;
+  const conv={id:curId,title,date:new Date().toISOString(),history:[...curHistory]};
+  if(idx>=0) convs[idx]=conv; else convs.unshift(conv);
+  localStorage.setItem('bizbot_convs',JSON.stringify(convs));
+  renderList();
+}
+
+function renderList(filter=''){
+  const list=document.getElementById('convList');
+  const filtered=convs.filter(c=>c.title.toLowerCase().includes(filter.toLowerCase()));
+  if(!filtered.length){ list.innerHTML='<div style="padding:16px;font-size:.78rem;color:var(--muted);text-align:center">Aucune conversation</div>'; return; }
+  list.innerHTML='<div class="conv-section-label">Conversations</div>';
+  filtered.forEach(c=>{
+    const d=new Date(c.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
+    list.innerHTML+=`<div class="conv-item ${c.id===curId?'active':''}" onclick="loadConv('${c.id}')">
+      <span>💬</span><span class="conv-text">${c.title}</span><span class="conv-date">${d}</span>
+    </div>`;
+  });
+}
+
+function loadConv(id){
+  const c=convs.find(x=>x.id===id); if(!c) return;
+  curId=id; curHistory=[...c.history];
+  document.getElementById('convTitle').textContent='💬 '+c.title;
+  document.getElementById('messages').innerHTML='';
+  c.history.forEach(msg=>{
+    if(msg.role==='user'){ addMsg('user',msg.content); }
+    else{ const id2=addMsg('bot',''); const b=document.getElementById('b'+id2); if(b) b.innerHTML=esc(msg.content); }
+  });
+  renderList();
+}
+
+function searchConvs(q){ renderList(q); }
+
+function downloadPDF(){
+  const {jsPDF}=window.jspdf; const doc=new jsPDF();
+  doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.text('BizBot — Conversation',20,20);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9);
+  doc.text('Exporté le '+new Date().toLocaleDateString('fr-FR'),20,28);
+  let y=40;
+  curHistory.forEach(msg=>{
+    const role=msg.role==='user'?'Vous':'BizBot';
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.text(role+':',20,y); y+=5;
+    doc.setFont('helvetica','normal');
+    const lines=doc.splitTextToSize(msg.content,170);
+    lines.forEach(l=>{ if(y>270){doc.addPage();y=20;} doc.text(l,20,y); y+=5; });
+    y+=4;
+  });
+  doc.save('bizbot.pdf');
+}
+</script>
+</body>
+</html>
