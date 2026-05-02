@@ -16,7 +16,7 @@ app = FastAPI()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 print("⏳ Chargement du modèle...")
-modele = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
+modele = SentenceTransformer("all-MiniLM-L6-v2")
 
 with open("data/business_knowledge.txt", "r", encoding="utf-8") as f:
     contenu = f.read()
